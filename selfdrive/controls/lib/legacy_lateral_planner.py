@@ -35,7 +35,6 @@ class LateralPlanner:
     self._dp_lat_lane_priority_mode_active = False
     self._dp_lat_lane_priority_mode_active_prev = False
     self._dp_lat_lane_change_assist_speed = int(self.params.get("dp_lat_lane_change_assist_speed", encoding="utf-8")) * CV.MPH_TO_MS
-
     self.last_cloudlog_t = 0
     try:
       self.steer_rate_cost = STEER_RATE_COST[CP.carName]
@@ -74,7 +73,7 @@ class LateralPlanner:
 
     # Lane change logic
     lane_change_prob = self.LP.l_lane_change_prob + self.LP.r_lane_change_prob
-    self.DH.update(sm['carState'], sm['carControl'].latActive, lane_change_prob, self._dp_lat_lane_change_assist_speed)
+    self.DH.update(sm['carState'], sm['carControl'].latActive, lane_change_prob, model_data=md)
 
     # Turn off lanes during lane change
     if self.DH.desire == log.LateralPlan.Desire.laneChangeRight or self.DH.desire == log.LateralPlan.Desire.laneChangeLeft:

@@ -19,10 +19,11 @@ from openpilot.selfdrive.manager.helpers import unblock_stdout, write_onroad_par
 from openpilot.selfdrive.manager.process import ensure_running
 from openpilot.selfdrive.manager.process_config import managed_processes
 from openpilot.selfdrive.athena.registration import register, UNREGISTERED_DONGLE_ID
-from openpilot.system.swaglog import cloudlog, add_file_handler
+from openpilot.common.swaglog import cloudlog, add_file_handler
 from openpilot.system.version import is_dirty, get_commit, get_version, get_origin, get_short_branch, \
-                           get_normalized_origin, terms_version, training_version, \
-                           is_tested_branch, is_release_branch
+  get_normalized_origin, terms_version, training_version, \
+  is_tested_branch, is_release_branch, get_commit_date
+
 import json
 from openpilot.selfdrive.car.fingerprints import all_known_cars, all_legacy_fingerprint_cars
 
@@ -38,6 +39,8 @@ def manager_init() -> None:
   params.clear_all(ParamKeyType.CLEAR_ON_MANAGER_START)
   params.clear_all(ParamKeyType.CLEAR_ON_ONROAD_TRANSITION)
   params.clear_all(ParamKeyType.CLEAR_ON_OFFROAD_TRANSITION)
+  if is_release_branch():
+    params.clear_all(ParamKeyType.DEVELOPMENT_ONLY)
 
   default_params: List[Tuple[str, Union[str, bytes]]] = [
     ("CompletedTrainingVersion", "0"),
@@ -50,10 +53,9 @@ def manager_init() -> None:
     ("DisableUpdates", "1"),
     ("dp_no_gps_ctrl", "0"),
     ("dp_no_fan_ctrl", "0"),
-    ("dp_logging", "1"),
+    ("dp_logging", "0"),
     ("dp_0813", "1"),
-    ("dp_lat_controller", "0"),
-
+    ("dp_lat_controller", "0"), # Lateral Controller
     # dp addition
     ("dp_alka", "0"),
     ("dp_mapd", "0"),
@@ -64,11 +66,8 @@ def manager_init() -> None:
     ("dp_toyota_enhanced_bsm", "0"),
     ("dp_toyota_auto_lock", "0"),
     ("dp_toyota_auto_unlock", "0"),
-    ("dp_device_display_off_mode", "0"),
     ("dp_device_audible_alert_mode", "0"),
     ("dp_device_disable_temp_check", "0"),
-    ("dp_fileserv", "0"),
-    ("dp_otisserv", "0"),
     ("dp_car_dashcam_mode_removal", "0"),
     ("dp_device_enable_comma_registration", "0"),
     ("dp_long_accel_profile", "0"),
@@ -82,9 +81,18 @@ def manager_init() -> None:
     ("dp_long_accel_btn", "0"),
     ("dp_long_personality_btn", "0"),
     ("dp_lat_lane_change_assist_speed", "20"),
-    ("dp_toyota_tss2_radar_disabled", "0"),
-    ("dp_device_display_flight_panel", "0"),
-    ("dp_ui_rainbow", "0"),
+    ("dp_vag_timebomb_bypass", "0"),
+    ("dp_otisserv", "0"),
+    ("dp_long_missing_lead_warning", "0"),
+    ("dp_on_road_dashcam", "0"),
+    ("dp_lateral_road_edge_detected", "0"),
+    ("dp_use_nnff", "0"),
+    ("dp_use_nnff_lite", "0"),
+    ("dp_torqued_override", "0"),
+    ("dp_torque_lat_accel_factor", "250"),
+    ("dp_torque_friction", "1"),
+    ("dp_gpxd", "0"),
+    ("dp_fleet_fileserv", "0"),
   ]
   if not PC:
     default_params.append(("LastUpdateTime", datetime.datetime.utcnow().isoformat().encode('utf8')))
@@ -118,9 +126,10 @@ def manager_init() -> None:
   params.put("Version", get_version())
   params.put("TermsVersion", terms_version)
   params.put("TrainingVersion", training_version)
-  params.put("GitCommit", get_commit(default=""))
-  params.put("GitBranch", get_short_branch(default=""))
-  params.put("GitRemote", get_origin(default=""))
+  params.put("GitCommit", get_commit())
+  params.put("GitCommitDate", get_commit_date())
+  params.put("GitBranch", get_short_branch())
+  params.put("GitRemote", get_origin())
   params.put_bool("IsTestedBranch", is_tested_branch())
   params.put_bool("IsReleaseBranch", is_release_branch())
 
@@ -132,6 +141,9 @@ def manager_init() -> None:
     serial = params.get("HardwareSerial")
     raise Exception(f"Registration failed for device {serial}")
   os.environ['DONGLE_ID'] = dongle_id  # Needed for swaglog
+  os.environ['GIT_ORIGIN'] = get_normalized_origin() # Needed for swaglog
+  os.environ['GIT_BRANCH'] = get_short_branch() # Needed for swaglog
+  os.environ['GIT_COMMIT'] = get_commit() # Needed for swaglog
 
   if not is_dirty():
     os.environ['CLEAN'] = '1'
@@ -182,18 +194,24 @@ def manager_thread() -> None:
   ignore += [x for x in os.getenv("BLOCK", "").split(",") if len(x) > 0]
 
   if not params.get_bool("dp_mapd"):
-    ignore += ["mapd", "gpxd"]
+    ignore += ["mapd"]
+
+  if not params.get_bool("dp_gpxd"):
+    ignore += ["gpxd"]
 
   if params.get_bool("dp_no_gps_ctrl"):
     ignore += ["ubloxd", "gpx_uploader", "gpxd", "mapd"]
 
-  if not params.get_bool("dp_fileserv"):
-    ignore += ["fileserv"]
+  if not params.get_bool("dp_fleet_fileserv"):
+    ignore += ["fleet_manager"]
 
   if not params.get_bool("dp_otisserv"):
     ignore += ["otisserv"]
 
-  sm = messaging.SubMaster(['deviceState', 'carParams'], poll=['deviceState'])
+  if not params.get_bool("dp_on_road_dashcam"):
+      ignore += ["dashcamd"]
+
+  sm = messaging.SubMaster(['deviceState', 'carParams'], poll='deviceState')
   pm = messaging.PubMaster(['managerState'])
 
   write_onroad_params(False, params)
@@ -202,7 +220,7 @@ def manager_thread() -> None:
   started_prev = False
 
   while True:
-    sm.update()
+    sm.update(1000)
 
     started = sm['deviceState'].started
 
@@ -219,7 +237,7 @@ def manager_thread() -> None:
 
     ensure_running(managed_processes.values(), started, params=params, CP=sm['carParams'], not_run=ignore)
 
-    running = ' '.join("%s%s\u001b[0m" % ("\u001b[32m" if p.proc.is_alive() else "\u001b[31m", p.name)
+    running = ' '.join("{}{}\u001b[0m".format("\u001b[32m" if p.proc.is_alive() else "\u001b[31m", p.name)
                        for p in managed_processes.values() if p.proc)
     print(running)
     cloudlog.debug(running)
@@ -244,17 +262,8 @@ def manager_thread() -> None:
 
 
 def main() -> None:
-  prepare_only = os.getenv("PREPAREONLY") is not None
-
   manager_init()
-
-  # Start UI early so prepare can happen in the background
-  if not prepare_only:
-    managed_processes['ui'].start()
-
-  manager_prepare()
-
-  if prepare_only:
+  if os.getenv("PREPAREONLY") is not None:
     return
 
   # SystemExit on sigterm
@@ -299,6 +308,8 @@ if __name__ == "__main__":
 
   try:
     main()
+  except KeyboardInterrupt:
+    print("got CTRL-C, exiting")
   except Exception:
     add_file_handler(cloudlog)
     cloudlog.exception("Manager failed to start")

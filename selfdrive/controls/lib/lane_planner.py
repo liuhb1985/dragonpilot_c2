@@ -1,12 +1,7 @@
-'''
-This is the lane_planner from 0.8.16
-
-reason I keep this as a separate file is that Nuclear Grade model released during 0.8.15 / 0.8.16.
-So it could handle better with old planners.
-
-Note 1: This may not work in newer version.
-
-'''
+#This is the lane_planner from 0.8.16
+#reason I keep this as a separate file is that Nuclear Grade model released during 0.8.15 / 0.8.16.
+#So it could handle better with old planners.
+#Note 1: This may not work in newer version.
 
 import numpy as np
 from cereal import log

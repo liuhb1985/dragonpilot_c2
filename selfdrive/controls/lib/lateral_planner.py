@@ -106,7 +106,7 @@ class LateralPlanner:
     else:
       lane_change_prob = self.l_lane_change_prob + self.r_lane_change_prob
 
-    self.DH.update(sm['carState'], sm['carControl'].latActive, lane_change_prob, self._dp_lat_lane_change_assist_speed)
+    self.DH.update(sm['carState'], sm['carControl'].latActive, lane_change_prob, model_data=md)
 
     if self._dp_lat_lane_priority_mode:
       d_path_xyz = self._get_laneless_laneline_d_path_xyz()
