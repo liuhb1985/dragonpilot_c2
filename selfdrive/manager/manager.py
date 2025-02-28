@@ -211,6 +211,10 @@ def manager_thread() -> None:
   if not params.get_bool("dp_on_road_dashcam"):
       ignore += ["dashcamd"]
 
+  #block
+  ignore += ["manage_athenad", "uploader"]
+
+
   sm = messaging.SubMaster(['deviceState', 'carParams'], poll='deviceState')
   pm = messaging.PubMaster(['managerState'])
 
