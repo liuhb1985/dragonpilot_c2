@@ -36,8 +36,8 @@ from openpilot.common.file_helpers import CallbackReader
 from openpilot.common.params import Params
 from openpilot.common.realtime import set_core_affinity
 from openpilot.system.hardware import HARDWARE, PC, AGNOS
-from openpilot.selfdrive.loggerd.config import ROOT
-from openpilot.selfdrive.loggerd.xattr_cache import getxattr, setxattr
+from openpilot.system.loggerd.config import ROOT
+from openpilot.system.loggerd.xattr_cache import getxattr, setxattr
 from openpilot.selfdrive.statsd import STATS_DIR
 from openpilot.system.swaglog import SWAGLOG_DIR, cloudlog
 from openpilot.system.version import get_commit, get_origin, get_short_branch, get_version

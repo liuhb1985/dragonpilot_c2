@@ -93,6 +93,7 @@ def manager_init() -> None:
     ("dp_torque_friction", "1"),
     ("dp_gpxd", "0"),
     ("dp_fleet_fileserv", "0"),
+    ("dp_dev_ui_info", "0"),
   ]
   if not PC:
     default_params.append(("LastUpdateTime", datetime.datetime.utcnow().isoformat().encode('utf8')))
@@ -211,9 +212,8 @@ def manager_thread() -> None:
   if not params.get_bool("dp_on_road_dashcam"):
       ignore += ["dashcamd"]
 
-  #block
+  #add by nana
   ignore += ["manage_athenad", "uploader"]
-
 
   sm = messaging.SubMaster(['deviceState', 'carParams'], poll='deviceState')
   pm = messaging.PubMaster(['managerState'])

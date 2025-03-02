@@ -1017,6 +1017,7 @@ class Controls:
     controlsStateExt = dat.controlsStateExt
     controlsStateExt.alkaActive = self._dp_alka_active
     controlsStateExt.alkaEnabled = self._dp_alka
+    controlsStateExt.lateralState = lat_tuning
     self.pm.send('controlsStateExt', dat)
 
     # carState

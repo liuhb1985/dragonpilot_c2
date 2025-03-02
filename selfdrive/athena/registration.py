@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
-import json
 import time
-from datetime import datetime, timedelta
+import json
+import jwt
 from pathlib import Path
 from typing import Optional
 
-import jwt
+from datetime import datetime, timedelta
 from openpilot.common.api import api_get
-from openpilot.common.basedir import PERSIST
 from openpilot.common.params import Params
 from openpilot.common.spinner import Spinner
-from openpilot.system.hardware import HARDWARE
+from openpilot.common.basedir import PERSIST
+from openpilot.selfdrive.controls.lib.alertmanager import set_offroad_alert
+from openpilot.system.hardware import HARDWARE, PC
 from openpilot.system.swaglog import cloudlog
+
 
 UNREGISTERED_DONGLE_ID = "UnregisteredDevice"
 

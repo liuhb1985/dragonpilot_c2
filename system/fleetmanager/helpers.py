@@ -6,7 +6,7 @@ from pathlib import Path
 from flask import render_template, request, session
 from openpilot.system.hardware import PC
 from openpilot.system.hardware.hw import Paths
-from openpilot.selfdrive.loggerd.uploader import listdir_by_creation
+from openpilot.system.loggerd.uploader import listdir_by_creation
 
 from tools.lib.route import SegmentName
 
