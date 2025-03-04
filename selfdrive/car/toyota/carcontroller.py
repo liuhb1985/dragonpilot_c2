@@ -157,27 +157,29 @@ class CarController:
             # print(self._blindspot_frame)
           # print("bsm poll right")
 
-    # *** steer torque ***
+    # *** steer torque 转向扭矩 ***
     new_steer = int(round(actuators.steer * self.params.STEER_MAX))
     apply_steer = apply_meas_steer_torque_limits(new_steer, self.last_steer, CS.out.steeringTorqueEps, self.params)
 
-    # >100 degree/sec steering fault prevention
+    # >100 degree/sec steering fault prevention >100度/秒转向故障预防
     self.steer_rate_counter, apply_steer_req = common_fault_avoidance(abs(CS.out.steeringRateDeg) >= MAX_STEER_RATE, CC.latActive,
                                                                       self.steer_rate_counter, MAX_STEER_RATE_FRAMES)
 
     if not CC.latActive:
       apply_steer = 0
 
-    # *** steer angle ***
+    # *** steer angle 转向角度 ***
     if self.CP.steerControlType == SteerControlType.angle:
       # If using LTA control, disable LKA and set steering angle command
+      # 如果使用LTA控制，禁用LKA并设置转向角命令
       apply_steer = 0
       apply_steer_req = False
       if self.frame % 2 == 0:
         # EPS uses the torque sensor angle to control with, offset to compensate
+        # EPS使用扭矩传感器角度进行控制，偏移进行补偿
         apply_angle = actuators.steeringAngleDeg + CS.out.steeringAngleOffsetDeg
 
-        # Angular rate limit based on speed
+        # Angular rate limit based on speed 基于速度的角速度限制
         apply_angle = apply_std_steer_angle_limits(apply_angle, self.last_angle, CS.out.vEgoRaw, self.params)
 
         if not lat_active:
@@ -190,17 +192,23 @@ class CarController:
     # toyota can trace shows STEERING_LKA at 42Hz, with counter adding alternatively 1 and 2;
     # sending it at 100Hz seem to allow a higher rate limit, as the rate limit seems imposed
     # on consecutive messages
+    # 丰田可以在42Hz下跟踪显示STEERING_LKA，计数器交替添加1和2；
+    # 以100Hz的频率发送似乎允许更高的速率限制，因为速率限制似乎是强加的连续消息
     can_sends.append(toyotacan.create_steer_command(self.packer, apply_steer, apply_steer_req))
 
     # STEERING_LTA does not seem to allow more rate by sending faster, and may wind up easier
+    # STEERING_LTA似乎不允许通过更快的发送来获得更高的速率，最终可能会更容易
     if self.frame % 2 == 0 and self.CP.carFingerprint in TSS2_CAR:
       lta_active = lat_active and self.CP.steerControlType == SteerControlType.angle
       # cut steering torque with TORQUE_WIND_DOWN when either EPS torque or driver torque is above
       # the threshold, to limit max lateral acceleration and for driver torque blending respectively.
+      # 当EPS扭矩或驾驶员扭矩高于
+      # 阈值分别用于限制最大横向加速度和驾驶员扭矩混合。
       full_torque_condition = (abs(CS.out.steeringTorqueEps) < self.params.STEER_MAX and
                                abs(CS.out.steeringTorque) < MAX_LTA_DRIVER_TORQUE_ALLOWANCE)
 
       # TORQUE_WIND_DOWN at 0 ramps down torque at roughly the max down rate of 1500 units/sec
+      # TORQUE_WIND_DOWN在0时以大约1500单位/秒的最大下降速率降低扭矩
       torque_wind_down = 100 if lta_active and full_torque_condition else 0
       can_sends.append(toyotacan.create_lta_steer_command(self.packer, self.CP.steerControlType, self.last_angle,
                                                           lta_active, self.frame // 2, torque_wind_down))
@@ -223,13 +231,16 @@ class CarController:
       interceptor_gas_cmd = 0.
 
     # prohibit negative compensatory calculations when first activating long after accelerator depression or engagement
+    # 在加速器踩下或接合后很久才首次激活时，禁止进行负补偿计算
     if not CC.longActive:
       self.prohibit_neg_calculation = True
     comp_thresh = interp(CS.out.vEgo, COMPENSATORY_CALCULATION_THRESHOLD_BP, COMPENSATORY_CALCULATION_THRESHOLD_V)
     # don't reset until a reasonable compensatory value is reached
+    # 在达到合理的补偿值之前，不要重置
     if CS.pcm_neutral_force > comp_thresh * self.CP.mass:
       self.prohibit_neg_calculation = False
     # NO_STOP_TIMER_CAR will creep if compensation is applied when stopping or stopped, don't compensate when stopped or stopping
+    # 如果在停止或停止时应用补偿，NO_STOP_TIMER_CAR将爬行，停止或停止后不进行补偿
     should_compensate = True
     if (self.CP.carFingerprint in NO_STOP_TIMER_CAR and actuators.accel < 1e-3 or stopping) or CS.out.vEgo < 1e-3:
       should_compensate = False
@@ -277,6 +288,7 @@ class CarController:
 
       # dp - for pcm compensation
       # when stopping, send -2.5 raw acceleration immediately to prevent vehicle from creeping, else send actuators.accel
+      # 停车时，立即发送-2.5的原始加速度，以防止车辆爬行，否则发送执行器
       accel_raw = -2.5 if stopping else actuators.accel
 
       # Lexus IS uses a different cancellation message
@@ -306,7 +318,9 @@ class CarController:
 
     if self.frame % 2 == 0 and self.CP.enableGasInterceptor and self.CP.openpilotLongitudinalControl:
       # send exactly zero if gas cmd is zero. Interceptor will send the max between read value and gas cmd.
+      # 如果gas cmd为零，则发送零。拦截器将发送读取值和gas cmd之间的最大值。
       # This prevents unexpected pedal range rescaling
+      # 这可以防止意外的踏板范围重新缩放
       can_sends.append(create_gas_interceptor_command(self.packer, interceptor_gas_cmd, self.frame // 2))
       self.gas = interceptor_gas_cmd
 

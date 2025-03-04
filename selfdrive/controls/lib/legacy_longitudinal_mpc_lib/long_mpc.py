@@ -77,14 +77,14 @@ def get_T_FOLLOW(personality=log.LongitudinalPersonality.standard):
 
 def get_dynamic_follow(v_ego, personality=log.LongitudinalPersonality.standard):
   if personality==log.LongitudinalPersonality.relaxed:
-    x_vel =  [0,    3.05,   3.61,   4.16,   7.14,   11.11]
-    y_dist = [1.75, 1.75, 1.77, 1.75, 1.8,  1.8]
+    x_vel =  [0.0,  3.0,  8.33,  13.90,  20,    25,    40]
+    y_dist = [1.2,  1.25, 1.40,  1.40,   1.50,  1.85,  2.0]
   elif personality==log.LongitudinalPersonality.standard:
-    x_vel =  [0,    3.05,   3.61,   4.16,   7.14,   11.11]
-    y_dist = [1.5,  1.5,  1.51,  1.5,  1.5,  1.45]
+    x_vel =  [0.0,  3.0,  8.33,  13.90,  20,    25,    40]
+    y_dist = [1.00,  1.00, 1.20,  1.20,   1.25,  1.45,  1.5]
   elif personality==log.LongitudinalPersonality.aggressive:
-    x_vel =  [0,    3.05,   3.61,   4.16,   7.14,   11.11]
-    y_dist = [1.12, 1.12, 1.13, 1.12, 1.22, 1.22]
+    x_vel =  [0.0,  4.00, 8.33,  13.89,  20,    25,    40]
+    y_dist = [0.8,  0.80, 0.90,  0.90,   0.9,  1.105, 1.12]
   else:
     raise NotImplementedError("Dynamic Follow personality not supported")
   return np.interp(v_ego, x_vel, y_dist)
@@ -92,15 +92,19 @@ def get_dynamic_follow(v_ego, personality=log.LongitudinalPersonality.standard):
 def get_stopped_equivalence_factor(v_lead):
   return (v_lead**2) / (2 * COMFORT_BRAKE)
 
+# 获取安全障碍物距离
 def get_safe_obstacle_distance(v_ego, t_follow):
   return (v_ego**2) / (2 * COMFORT_BRAKE) + t_follow * v_ego + STOP_DISTANCE
 
+# 期望跟车距离
 def desired_follow_distance(v_ego, v_lead, t_follow=get_T_FOLLOW()):
   return get_safe_obstacle_distance(v_ego, t_follow) - get_stopped_equivalence_factor(v_lead)
 
 def get_stopped_equivalence_factor_krkeegen(v_lead, v_ego):
   # KRKeegan this offset rapidly decreases the following distance when the lead pulls
   # away, resulting in an early demand for acceleration.
+  # KRKeegan当引线拉动时，这种偏移会迅速减小跟车距离
+  # 这导致了对加速的早期需求。
   v_diff_offset = 0
   if np.all(v_lead - v_ego > 0):
     v_diff_offset = ((v_lead - v_ego) * 1.)

@@ -21,26 +21,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-# Version = 2024-02-28
+# Version = 2024-9-28
 from common.numpy_fast import interp
 
 # d-e2e, from modeldata.h
 TRAJECTORY_SIZE = 33
 
-LEAD_WINDOW_SIZE = 3
-LEAD_PROB = 0.5
+LEAD_WINDOW_SIZE = 4
+LEAD_PROB = 0.6
 
-SLOW_DOWN_WINDOW_SIZE = 5
-SLOW_DOWN_PROB = 0.5
-SLOW_DOWN_BP = [0., 10., 20., 30., 40., 50., 55.]
-SLOW_DOWN_DIST = [10, 30., 50., 70., 80., 90., 120.]
+SLOW_DOWN_WINDOW_SIZE = 4
+SLOW_DOWN_PROB = 0.6
 
-SLOWNESS_WINDOW_SIZE = 10
+SLOW_DOWN_BP = [0., 10., 20., 30., 40., 50., 55., 60.]
+SLOW_DOWN_DIST = [25., 38., 55., 75., 95., 115., 130., 150.]
+
+SLOWNESS_WINDOW_SIZE = 12
 SLOWNESS_PROB = 0.5
 SLOWNESS_CRUISE_OFFSET = 1.05
 
 DANGEROUS_TTC_WINDOW_SIZE = 3
-DANGEROUS_TTC = 2.0
+DANGEROUS_TTC = 2.3
 
 HIGHWAY_CRUISE_KPH = 70
 
@@ -53,10 +54,12 @@ MPC_FCW_PROB = 0.5
 
 V_ACC_MIN = 9.72
 
+
 class SNG_State:
   off = 0
   stopped = 1
   going = 2
+
 
 class GenericMovingAverageCalculator:
   def __init__(self, window_size):

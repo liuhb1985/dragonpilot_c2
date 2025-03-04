@@ -27,25 +27,21 @@ import datetime
 import cereal.messaging as messaging
 
 DASHCAM_VIDEOS_PATH = '/data/media/0/dashcam/'
-DASHCAM_DURATION = 180  # max is 180
+DASHCAM_DURATION = 300  # max is 180 (5min)
 DASHCAM_BIT_RATES = 4000000  # max is 4000000
-DASHCAM_MAX_SIZE_PER_FILE = DASHCAM_BIT_RATES / 8 * DASHCAM_DURATION  # 4Mbps / 8 * 180 = 90MB per 180 seconds
+DASHCAM_MAX_SIZE_PER_FILE = DASHCAM_BIT_RATES / 8 * DASHCAM_DURATION  # 4Mbps / 8 * 180 = 90MB per 180 seconds (150mb per 300 seconds)
 DASHCAM_FREESPACE_LIMIT = 15  # we start cleaning up footage when freespace is below 15%
-DASHCAM_KEPT_MIN_SIZE = DASHCAM_MAX_SIZE_PER_FILE * 240  # 12 hrs of video = 21GB
-
+DASHCAM_KEPT_MIN_SIZE = DASHCAM_MAX_SIZE_PER_FILE * 240  # 12 hrs of video = 21GB (20hrs of video = 36GB)
 
 class Dashcamd():
   def __init__(self):
-    self.sm = messaging.SubMaster(['deviceState'])
     self.dashcam_folder_exists = False
     self.dashcam_mkdir_retry = 0
     self.dashcam_next_time = 0
     self.started = False
     self.free_space = 1.
 
-  def run(self):
-    started = self.sm['deviceState'].started
-    free_space = self.sm['deviceState'].freeSpacePercent
+  def run(self, started, free_space):
     self.free_space = free_space
     if self.started and not started:
       self.stop()
@@ -100,16 +96,3 @@ class Dashcamd():
     except (IndexError, FileNotFoundError, OSError):
       val = 0
     return val
-
-
-def dashcamd_thread():
-  dashcamd = Dashcamd()
-  dashcamd.run()
-
-
-def main():
-  dashcamd_thread()
-
-
-if __name__ == "__main__":
-  main()

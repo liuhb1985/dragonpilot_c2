@@ -210,7 +210,7 @@ def manager_thread() -> None:
     ignore += ["otisserv"]
 
   if not params.get_bool("dp_on_road_dashcam"):
-      ignore += ["dashcamd"]
+      ignore += ["systemd"]
 
   #add by nana
   ignore += ["manage_athenad", "uploader"]
