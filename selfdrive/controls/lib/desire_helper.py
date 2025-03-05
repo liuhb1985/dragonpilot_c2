@@ -78,9 +78,11 @@ class DesireHelper:
         blindspot_detected = ((carstate.leftBlindspot and self.lane_change_direction == LaneChangeDirection.left) or
                               (carstate.rightBlindspot and self.lane_change_direction == LaneChangeDirection.right))
 
-        #dp road detected
+        road_edge_detected = False
+        # dp road detected
         if self._dp_lateral_road_edge_detected:
           road_edge_detected = get_road_edge(carstate, model_data, self._dp_lateral_road_edge_detected)
+
         if not one_blinker or below_lane_change_speed:
           self.lane_change_state = LaneChangeState.off
           self.lane_change_direction = LaneChangeDirection.none

@@ -205,8 +205,8 @@ def clip_curvature(v_ego, prev_curvature, new_curvature):
   v_ego = max(MIN_SPEED, v_ego)
   max_curvature_rate = MAX_LATERAL_JERK / (v_ego**2) # inexact calculation, check https://github.com/commaai/openpilot/pull/24755
   safe_desired_curvature = clip(new_curvature,
-                                prev_curvature - max_curvature_rate * DT_CTRL,
-                                prev_curvature + max_curvature_rate * DT_CTRL)
+                                prev_curvature - max_curvature_rate * DT_MDL,
+                                prev_curvature + max_curvature_rate * DT_MDL)
 
   return safe_desired_curvature
 
@@ -239,12 +239,17 @@ def get_road_edge(carstate, model_v2, toggle):
     min_lane_threshold = 3.0
     # Set the blinker index based on which signal is on
     blinker_index = 0 if carstate.leftBlinker else 1
+    if blinker_index >= len(model_v2.roadEdges) or blinker_index + 1 >= len(model_v2.laneLines):
+      return True
     desired_edge = model_v2.roadEdges[blinker_index]
     current_lane = model_v2.laneLines[blinker_index + 1]
-    # Check if both the desired lane and the current lane have valid x and y values
-    if all([desired_edge.x, desired_edge.y, current_lane.x, current_lane.y]) and len(desired_edge.x) == len(current_lane.x):
-      # Interpolate the x and y values to the same length
-      x = np.linspace(desired_edge.x[0], desired_edge.x[-1], num=len(desired_edge.x))
+    has_valid_data = (hasattr(desired_edge, 'x') and hasattr(desired_edge, 'y') and 
+                      hasattr(current_lane, 'x') and hasattr(current_lane, 'y'))
+    
+    if has_valid_data and len(desired_edge.x) > 0 and len(desired_edge.y) > 0 and len(current_lane.x) > 0 and len(current_lane.y) > 0 and len(desired_edge.x) == len(current_lane.x):
+      # 优化：预先计算数组长度，避免重复计算
+      array_length = len(desired_edge.x)
+      x = np.linspace(desired_edge.x[0], desired_edge.x[-1], num=array_length)
       lane_y = np.interp(x, current_lane.x, current_lane.y)
       desired_y = np.interp(x, desired_edge.x, desired_edge.y)
       # Calculate the width of the lane we're wanting to change into
