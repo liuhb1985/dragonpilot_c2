@@ -78,15 +78,20 @@ def get_T_FOLLOW(personality=log.LongitudinalPersonality.standard):
     raise NotImplementedError("Longitudinal personality not supported")
 
 def get_dynamic_follow(v_ego, personality=log.LongitudinalPersonality.standard):
+  # 添加对v_ego的边界检查
+  v_ego = max(0.0, min(v_ego, 40.0))  # 限制v_ego在0-40 m/s之间
   if personality==log.LongitudinalPersonality.relaxed:
-    x_vel =  [0.0,  3.0,  8.33,  13.90,  20,    25,    40]
-    y_dist = [1.2,  1.25, 1.40,  1.40,   1.50,  1.85,  2.0]
+    # 调整速度区间使过渡更平滑
+    x_vel =  [0.0,  3.0,  8.0,  13.90,  20,    25,    40]  # m/s
+    y_dist = [1.0,  1.05, 1.15,  1.25,   1.35,  1.55,  1.7] # 秒
   elif personality==log.LongitudinalPersonality.standard:
-    x_vel =  [0.0,  3.0,  8.33,  13.90,  20,    25,    40]
-    y_dist = [1.00,  1.00, 1.20,  1.20,   1.25,  1.45,  1.5]
+    # 调整速度区间使过渡更平滑
+    x_vel =  [0.0,  3.0,  8.0,  13.90,  20,    25,    40]  # m/s
+    y_dist = [0.85, 0.90, 0.95,  1.05,   1.15,  1.25,  1.3] # 秒
   elif personality==log.LongitudinalPersonality.aggressive:
-    x_vel =  [0.0,  4.00, 8.33,  13.89,  20,    25,    40]
-    y_dist = [0.8,  0.80, 0.90,  0.90,   0.9,  1.105, 1.12]
+    # 调整速度区间使过渡更平滑
+    x_vel =  [0.0,  4.00, 8.0,  13.89,  20,    25,    40]  # m/s
+    y_dist = [0.65, 0.70, 0.75,  0.80,   0.85,  0.95,  1.0] # 秒
   else:
     raise NotImplementedError("Dynamic Follow personality not supported")
   return np.interp(v_ego, x_vel, y_dist)

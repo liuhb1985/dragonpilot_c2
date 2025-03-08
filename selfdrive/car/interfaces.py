@@ -20,6 +20,7 @@ from openpilot.selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX, get_fri
 from openpilot.selfdrive.controls.lib.events import Events
 from openpilot.selfdrive.controls.lib.vehicle_model import VehicleModel
 from openpilot.common.params import Params
+from openpilot.common.swaglog import cloudlog
 
 ButtonType = car.CarState.ButtonEvent.Type
 GearShifter = car.CarState.GearShifter
