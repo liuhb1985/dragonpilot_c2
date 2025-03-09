@@ -203,7 +203,6 @@ class LatControlTorque(LatControl):
         lateral_jerk_measurement = self.lat_jerk_friction_factor * actual_lateral_jerk
 
       if self.use_nnff and model_good:
-        print("NNFFModel Support" + model_good)
         # update past data
         pitch = 0
         roll = params.roll
