@@ -27,7 +27,6 @@ from openpilot.common.swaglog import cloudlog
 LOW_SPEED_X = [0, 10, 20, 30]
 LOW_SPEED_Y = [15, 13, 10, 5]
 LOW_SPEED_Y_NN = [12, 3, 1, 0]
-
 LAT_PLAN_MIN_IDX = 5
 
 def get_predicted_lateral_jerk(lat_accels, t_diffs):
@@ -153,7 +152,7 @@ class LatControlTorque(LatControl):
     self.update_live_tune()
 
     pid_log = log.ControlsState.LateralTorqueState.new_message()
-    nn_log = None
+    #nn_log = None
 
     if not active:
       output_torque = 0.0
@@ -211,7 +210,6 @@ class LatControlTorque(LatControl):
           roll = roll_pitch_adjust(roll, pitch)
         self.roll_deque.append(roll)
         self.lateral_accel_desired_deque.append(desired_lateral_accel)
-
         # prepare past and future values
         # adjust future times to account for longitudinal acceleration
         adjusted_future_times = [t + 0.5*CS.aEgo*(t/max(CS.vEgo, 1.0)) for t in self.nn_future_times]
@@ -251,7 +249,7 @@ class LatControlTorque(LatControl):
         if self.nn_friction_override:
           pid_log.error += self.torque_from_lateral_accel(LatControlInputs(0.0, 0.0, CS.vEgo, CS.aEgo), self.torque_params,
                                                           friction_input, lateral_accel_deadzone, friction_compensation=True)
-        nn_log = nn_input + nnff_setpoint_input + nnff_measurement_input
+        #nn_log = nn_input + nnff_setpoint_input + nnff_measurement_input
       else:
         gravity_adjusted_lateral_accel = desired_lateral_accel - roll_compensation
         torque_from_setpoint = self.torque_from_lateral_accel(LatControlInputs(setpoint, roll_compensation, CS.vEgo, CS.aEgo), self.torque_params,
@@ -282,8 +280,8 @@ class LatControlTorque(LatControl):
       pid_log.actualLateralAccel = actual_lateral_accel
       pid_log.desiredLateralAccel = desired_lateral_accel
       pid_log.saturated = self._check_saturation(self.steer_max - abs(output_torque) < 1e-3, CS, steer_limited)
-      if nn_log is not None:
-        pid_log.nnLog = nn_log
+      #if nn_log is not None:
+      #  pid_log.nnLog = nn_log
 
     # TODO left is positive in this convention
     return -output_torque, 0.0, pid_log
