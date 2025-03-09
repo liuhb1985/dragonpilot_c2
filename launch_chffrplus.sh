@@ -83,7 +83,10 @@ function two_init {
   # *** set up governors ***
 
   # +50mW offroad, +500mW onroad for 30% more RAM bandwidth
-  echo "performance" > /sys/class/devfreq/soc:qcom,cpubw/governor
+  # 设置 CPU 带宽调节器
+  if [ -f /sys/class/devfreq/soc:qcom,cpubw/governor ]; then
+    echo "performance" > /sys/class/devfreq/soc:qcom,cpubw/governor 2>/dev/null || true
+  fi
   # available freq:
   # 192000000 307200000 384000000 441600000 537600000 614400000 691200000
   # 768000000 844800000 902400000 979200000 "1056000000" 1132800000
@@ -122,9 +125,15 @@ function two_init {
   # GPU and camera get cpu 2
   CAM_IRQS="177 178 179 180 181 182 183 184 185 186 192"
   for irq in $CAM_IRQS; do
-    echo 2 > /proc/irq/$irq/smp_affinity_list
+    if [ -d "/proc/irq/$irq" ]; then
+      echo 2 > /proc/irq/$irq/smp_affinity_list 2>/dev/null || true
+    fi
   done
-  echo 2 > /proc/irq/193/smp_affinity_list # GPU
+  
+  # GPU IRQ
+  if [ -d "/proc/irq/193" ]; then
+    echo 2 > /proc/irq/193/smp_affinity_list 2>/dev/null || true
+  fi
 
   # give GPU threads RT priority
   for pid in $(pgrep "kgsl"); do

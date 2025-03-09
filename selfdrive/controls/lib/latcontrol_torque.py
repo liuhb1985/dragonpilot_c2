@@ -1,8 +1,6 @@
 from collections import deque
-
 import math
 import numpy as np
-
 from cereal import log
 from openpilot.common.filter_simple import FirstOrderFilter
 from openpilot.common.numpy_fast import interp
@@ -13,6 +11,7 @@ from openpilot.selfdrive.controls.lib.latcontrol import LatControl
 from openpilot.selfdrive.controls.lib.pid import PIDController
 from openpilot.selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY
 from openpilot.selfdrive.modeld.constants import ModelConstants
+from openpilot.common.swaglog import cloudlog
 
 # At higher speeds (25+mph) we can assume:
 # Lateral acceleration achieved by a specific car correlates to
@@ -204,7 +203,6 @@ class LatControlTorque(LatControl):
         lateral_jerk_measurement = self.lat_jerk_friction_factor * actual_lateral_jerk
 
       if self.use_nnff and model_good:
-        print("NNFFModel Support" + model_good)
         # update past data
         pitch = 0
         roll = params.roll
