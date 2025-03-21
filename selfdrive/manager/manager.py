@@ -23,7 +23,7 @@ from openpilot.selfdrive.athena.registration import register, UNREGISTERED_DONGL
 from openpilot.system.swaglog import cloudlog, add_file_handler
 from openpilot.system.version import is_dirty, get_commit, get_version, get_origin, get_short_branch, \
   get_normalized_origin, terms_version, training_version, \
-  is_tested_branch, is_release_branch, get_commit_date
+  is_tested_branch, is_release_branch
 
 import json
 from openpilot.selfdrive.car.fingerprints import all_known_cars, all_legacy_fingerprint_cars
@@ -146,7 +146,6 @@ def manager_init() -> None:
   params.put("TermsVersion", terms_version)
   params.put("TrainingVersion", training_version)
   params.put("GitCommit", get_commit())
-  params.put("GitCommitDate", get_commit_date())
   params.put("GitBranch", get_short_branch())
   params.put("GitRemote", get_origin())
   params.put_bool("IsTestedBranch", is_tested_branch())
